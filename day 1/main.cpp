@@ -15,7 +15,6 @@ int main() {
 	}
 
 	std::string line;
-	uint64_t elfMax = 0;
 	std::vector<uint64_t> elvesCaloriesCarried;
 
 	uint64_t temp_sum = 0;
@@ -35,7 +34,7 @@ int main() {
 	for(int i = elvesCaloriesCarried.size()-1; i >= elvesCaloriesCarried.size()-3; i--) {
 		caloriesCarriedByTopThree += elvesCaloriesCarried[i];
 	}
-
+	std::cout << "Calories top elf: " << elvesCaloriesCarried.back() << std::endl;
 	std::cout << "Sum calories carried by the top 3 elves: " << caloriesCarriedByTopThree << std::endl;
 	
 
