@@ -4,6 +4,8 @@
 #include <vector>
 #include <map>
 #include <unordered_set>
+#include <algorithm>
+#include <set>
 
 const char* INPUT_FILE = "input.txt";
 
@@ -12,49 +14,38 @@ const char* INPUT_FILE = "input.txt";
 
 std::map<char, uint8_t> priorities;
 
-char findCharduplicated(std::string line1, std::string line2) {
-	std::unordered_set<char> charSet;
-	for(size_t i = 0; i < line1.size(); i++) {
-		charSet.insert(line1.at(i));
-	}
+char findCharDuplicated(std::string line1, std::string line2) {
+	std::vector<char> out;
 	
-	for(size_t i = 0; i < line2.size(); i++) {
-		char searchChar = line2.at(i);
-		if(charSet.find(searchChar) != charSet.end()) {
-			return searchChar;
-		}
-	}
-	
-	return '?';
+	// set_intersection needs input to be sorted
+	std::sort(line1.begin(), line1.end());
+	std::sort(line2.begin(), line2.end());
+
+	std::set_intersection(line1.begin(), line1.end(), 
+							line2.begin(), line2.end(),
+							std::back_inserter(out));
+	return out[0];
 }
 
 char getBadge(std::string line1, std::string line2, std::string line3) {
-	std::unordered_set<char> charSet;
-	for(size_t i = 0; i < line1.size(); i++) {
-		charSet.insert(line1.at(i));
-	}
+	std::vector<char> line1IntLine2;
+	std::vector<char> out;
+	
+	// set_intersection needs input to be sorted
+	std::sort(line1.begin(), line1.end());
+	std::sort(line2.begin(), line2.end());
+	std::sort(line3.begin(), line3.end());
 
-	std::unordered_set<char> duplicates;
-	for(size_t i = 0; i < line2.size(); i++) {
-		char searchChar = line2.at(i);
-		if(charSet.find(searchChar) != charSet.end()) {
-			duplicates.insert(searchChar);
-		}
-	}
+	std::set_intersection(line1.begin(), line1.end(), 
+							line2.begin(), line2.end(),
+							std::back_inserter(line1IntLine2));
+	std::sort(line1IntLine2.begin(), line1IntLine2.end());
 
-	std::cout << line1 << "\n" << line2 << "\n" << line3 << std::endl;
-
-	for (auto const &i: duplicates) {
-        std::cout << i << std::endl;
-    }
-
-	for(size_t i = 0; i < line3.size(); i++) {
-		char searchChar = line3.at(i);
-		if(duplicates.find(searchChar) != duplicates.end()) {
-			return searchChar;
-		}
-	}
-	return '?'; 
+	std::set_intersection(line3.begin(), line3.end(), 
+							line1IntLine2.begin(), line1IntLine2.end(),
+							std::back_inserter(out));
+				
+	return out[0];
 }
 
 int main() {
@@ -88,14 +79,10 @@ int main() {
 
 		uint32_t lineMidIndex = uint32_t(line.size() / 2.0);
 		std::string part1 = line.substr(0, lineMidIndex);
-		std::string part2 = line.substr(lineMidIndex, line.size()-1);
+		std::string part2 = line.substr(lineMidIndex);
 	
 		std::cout << "size: " << line.size() << " middle index: " << lineMidIndex << " Part1: " << part1 << " # part2: " << part2 << std::endl;
-		char duplicatedChar = findCharduplicated(part1, part2);
-		if(duplicatedChar == '?') {
-			std::cout << "Bad" << std::endl;
-			exit(0);
-		}
+		char duplicatedChar = findCharDuplicated(part1, part2);
 		std::cout << "Duplicated: " << duplicatedChar << std::endl;
 
 		sumPriority += priorities[duplicatedChar];
@@ -104,7 +91,6 @@ int main() {
 			lineCount = 0;
 			char badge = getBadge(group[0], group[1], group[2]);
 			std::cout << "Group badge: " << badge << std::endl;
-			if (badge == '?')exit(0);
 			sumPriorityBadges += priorities[badge];
 		}
 	}
