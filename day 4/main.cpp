@@ -50,6 +50,20 @@ bool isSectionsContained(SectionsWorking sections1, SectionsWorking sections2) {
     return false;
 }
 
+bool isSectionOverlapping(SectionsWorking sections1, SectionsWorking sections2) {
+    // Min from section 1 overlapps
+    if(sections1.minSection >= sections2.minSection && sections1.minSection <= sections2.maxSection)return true;
+    // Max from section 1 overlapps
+    if(sections1.maxSection >= sections2.minSection && sections1.maxSection <= sections2.maxSection)return true;
+
+    // Min from section 2 overlapps
+    if(sections2.minSection >= sections1.minSection && sections2.minSection <= sections1.maxSection)return true;
+    // Max from section 2 overlapps
+    if(sections2.maxSection >= sections1.minSection && sections2.maxSection <= sections1.maxSection)return true;
+
+    return false;
+}
+
 
 int main() {
 	std::fstream inputFile = std::fstream(INPUT_FILE);
@@ -60,6 +74,7 @@ int main() {
 	}
 
     uint32_t assigmentsPairFullyContained = 0;
+    uint32_t assigmentsPairOverlapping = 0;
 
     std::string line;
     while(std::getline(inputFile, line)) {
@@ -68,12 +83,22 @@ int main() {
         SectionsWorking sectionsElf1 = getSections(pairsNumbers.strings[0]);
         SectionsWorking sectionsElf2 = getSections(pairsNumbers.strings[1]);
 
+        std::cout << "Elf 1: " << sectionsElf1.minSection << "," << sectionsElf1.maxSection << std::endl;
+        std::cout << "Elf 2: " << sectionsElf2.minSection << "," << sectionsElf2.maxSection << std::endl;
+
         if(isSectionsContained(sectionsElf1, sectionsElf2)){
+            std::cout << "CONTAINED" << std::endl;
             assigmentsPairFullyContained++;
         }
+        if(isSectionOverlapping(sectionsElf1, sectionsElf2)){
+            std::cout << "OVERLAPPS" << std::endl;
+            assigmentsPairOverlapping++;
+        }
+        std::cout << "-----------------------------" << std::endl;
     }
 
-    std::cout << "Assigments pair fully contained: " << assigmentsPairFullyContained << std::endl;
+    std::cout << "Total Assigments pair fully contained: " << assigmentsPairFullyContained << std::endl;
+    std::cout << "Total Assigments pair overlapping: " << assigmentsPairOverlapping << std::endl;
 
 	return 0;
 }
