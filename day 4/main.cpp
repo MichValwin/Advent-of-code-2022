@@ -53,13 +53,8 @@ bool isSectionsContained(SectionsWorking sections1, SectionsWorking sections2) {
 bool isSectionOverlapping(SectionsWorking sections1, SectionsWorking sections2) {
     // Min from section 1 overlapps
     if(sections1.minSection >= sections2.minSection && sections1.minSection <= sections2.maxSection)return true;
-    // Max from section 1 overlapps
-    if(sections1.maxSection >= sections2.minSection && sections1.maxSection <= sections2.maxSection)return true;
-
     // Min from section 2 overlapps
     if(sections2.minSection >= sections1.minSection && sections2.minSection <= sections1.maxSection)return true;
-    // Max from section 2 overlapps
-    if(sections2.maxSection >= sections1.minSection && sections2.maxSection <= sections1.maxSection)return true;
 
     return false;
 }
