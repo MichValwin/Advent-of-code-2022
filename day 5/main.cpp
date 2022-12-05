@@ -66,7 +66,7 @@ int main() {
     size_t lineIndex = 0;
     
     while(std::getline(inputFile, line)) {
-        if(line.size() > 2 && std::isdigit(line.c_str()[1])) {
+        if(line.size() > 2 && std::isdigit(line[1])) {
             indexFinishCrates = lineIndex;
             numberOfStacks = (size_t)std::ceil(line.size() / 4.0);
         }
@@ -87,7 +87,7 @@ int main() {
     // Parse crates
     while(std::getline(inputFile, line)) {
         for(size_t i = 0; i < numberOfStacks; i++) {
-            if(line.c_str()[i*4+1] != ' ')cratesVector[i].push_back(line.c_str()[i*4+1]);
+            if(line[i*4+1] != ' ')cratesVector[i].push_back(line[i*4+1]);
         }
 
         if(lineIndex == indexFinishCrates-1)break;
