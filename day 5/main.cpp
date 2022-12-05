@@ -3,94 +3,109 @@
 #include <string>
 #include <vector>
 #include <stack>
+#include <cmath>
 
-const char* INPUT_FILE = "input.txt";
+const char* INPUT_FILE = "bigboy.txt";
 
-struct SplitString{
-    char delimiter;
-    std::vector<std::string> strings;
-};
+std::vector<char>* cratesVector;
+std::stack<char>* cratesStack1;
+std::stack<char>* cratesStack2;
+size_t numberOfStacks = 0;
 
-SplitString splitString(std::string str, char delimiter) {
-    SplitString strings;
-    strings.delimiter = delimiter;
-
-    int start = 0;
-    int end = str.find(delimiter);
-    while (end != -1) {
-        strings.strings.push_back(str.substr(start, end - start));
-        start = end + 1;
-        end = str.find(delimiter, start);
-    }
-    strings.strings.push_back(str.substr(start, end - start));
-
-    return strings;
-}
-
-
-// Stacks from input
-std::stack<char> supplyStacks[9] = {
-    std::stack<char>({'W', 'R', 'F'}),
-    std::stack<char>({'T', 'H', 'M', 'C', 'D', 'V', 'W', 'P'}),
-    std::stack<char>({'P', 'M', 'Z', 'N', 'L'}),
-    std::stack<char>({'J', 'C', 'H', 'R'}),
-    std::stack<char>({'C', 'P', 'G', 'H', 'Q', 'T', 'B'}),
-    std::stack<char>({'G', 'C', 'W', 'L', 'F', 'Z'}),
-    std::stack<char>({'W', 'V', 'L', 'Q', 'Z', 'J', 'G', 'C'}),
-    std::stack<char>({'P', 'N', 'R', 'F', 'W', 'T', 'V', 'C'}),
-    std::stack<char>({'J', 'W', 'H', 'G', 'R', 'S', 'V'})
-};
-
-void moveSupply(size_t numberToMove, uint32_t supplyIndexStart, uint32_t supplyIndexEnd) {
+void moveSupply(std::stack<char>* crates, size_t numberToMove, uint32_t supplyIndexStart, uint32_t supplyIndexEnd) {
     for(size_t i = 0; i < numberToMove; i++) {
-        char movingBox = supplyStacks[supplyIndexStart].top();
-        supplyStacks[supplyIndexStart].pop();
-        supplyStacks[supplyIndexEnd].push(movingBox);
+        char movingBox = crates[supplyIndexStart].top();
+        crates[supplyIndexStart].pop();
+        crates[supplyIndexEnd].push(movingBox);
     }
 }
 
-void moveSupply9001(size_t numberToMove, uint32_t supplyIndexStart, uint32_t supplyIndexEnd) {
+void moveSupply9001(std::stack<char>* crates, size_t numberToMove, uint32_t supplyIndexStart, uint32_t supplyIndexEnd) {
     std::vector<char> cache;
     for(size_t i = 0; i < numberToMove; i++) {
-        char movingBox = supplyStacks[supplyIndexStart].top();
-        supplyStacks[supplyIndexStart].pop();
+        char movingBox = crates[supplyIndexStart].top();
+        crates[supplyIndexStart].pop();
         cache.push_back(movingBox);
     }
 
     while(!cache.empty()){
-        supplyStacks[supplyIndexEnd].push(cache.back());
+        crates[supplyIndexEnd].push(cache.back());
         cache.pop_back();
     }
 }
 
-std::string getTopBoxes() {
+void initStacks(std::stack<char>* crates, std::vector<char>* cratesVector) {
+    for(size_t i = 0; i < numberOfStacks; i++) {
+        for(int64_t j = cratesVector[i].size()-1; j >= 0; j--){
+            crates[i].push(cratesVector[i][j]); 
+        }
+    }
+}
+
+std::string getTopBoxes(std::stack<char>* crates) {
     std::string topBoxes = "";
-    for(int i = 0; i < 9; i++) {
-        topBoxes.push_back(supplyStacks[i].top());
+    for(size_t i = 0; i < numberOfStacks; i++) {
+        topBoxes.push_back(crates[i].top());
     }
     return topBoxes;
 }
 
 int main() {
-	std::fstream inputFile = std::fstream(INPUT_FILE);
+	std::fstream inputFile(INPUT_FILE);
 
 	if(!inputFile.is_open()) {
 		std::cout << "Can't open " << INPUT_FILE << std::endl;
 		exit(0);
 	}
-    /*
-    for(int i = 0; i < 9; i++) {
-        std::cout << "NUmber: " << (int)(i+1) << std::endl;
-        while(!supplyStacks[i].empty()) { 
-            std::cout << supplyStacks[i].top() << std::endl;
-            supplyStacks[i].pop();
-        }
-        std::cout << "-------------------" << std::endl;
-    }
-    */
     
     std::string line;
+
+    // Get line index
+    size_t indexFinishCrates = 0;
+    size_t indexStartCommands = 0;
+    size_t lineIndex = 0;
+    
     while(std::getline(inputFile, line)) {
+        if(line.size() > 2 && std::isdigit(line.c_str()[1])) {
+            indexFinishCrates = lineIndex;
+            numberOfStacks = (size_t)std::ceil(line.size() / 4.0);
+        }
+
+        if(line.size() > 2 && line.substr(0, 4).compare("move") == 0) {
+            indexStartCommands = inputFile.tellg();
+            indexStartCommands -= line.size();
+            break;
+        }
+        lineIndex++;
+    }
+    std::cout << "Number of stacks " << numberOfStacks << std::endl;
+    cratesVector = new std::vector<char>[numberOfStacks];
+
+    inputFile.clear();
+    inputFile.seekg(0);
+    lineIndex = 0;
+    // Parse crates
+    while(std::getline(inputFile, line)) {
+        for(size_t i = 0; i < numberOfStacks; i++) {
+            if(line.c_str()[i*4+1] != ' ')cratesVector[i].push_back(line.c_str()[i*4+1]);
+        }
+
+        if(lineIndex == indexFinishCrates-1)break;
+        lineIndex++;
+    }
+
+    cratesStack1 = new std::stack<char>[numberOfStacks];
+    cratesStack2 = new std::stack<char>[numberOfStacks];
+    initStacks(cratesStack1, cratesVector);
+    initStacks(cratesStack2, cratesVector);
+
+    std::cout << "Top boxes before rearrange: " << getTopBoxes(cratesStack1) << std::endl;
+
+    inputFile.clear();
+    inputFile.seekg(indexStartCommands, std::ios::beg);
+    while(std::getline(inputFile, line)) {
+        if(line.empty())continue;
+
         size_t numberToMove;
         uint32_t supplyIndexStart;
         uint32_t supplyIndexEnd;
@@ -103,13 +118,18 @@ int main() {
         supplyIndexStart =  std::atoi(line.substr(initfromStrIndex+6, inittoStrIndex - (initfromStrIndex+6)).c_str());
         supplyIndexEnd =  std::atoi(line.substr(inittoStrIndex+4, line.size()-1).c_str());
       
-        std::cout << numberToMove << " " << supplyIndexStart << " " << supplyIndexEnd << std::endl;
+        //std::cout << numberToMove << " " << supplyIndexStart << " " << supplyIndexEnd << std::endl;
 
-        //moveSupply(numberToMove, supplyIndexStart-1, supplyIndexEnd-1);
-        moveSupply9001(numberToMove, supplyIndexStart-1, supplyIndexEnd-1);
+        moveSupply(cratesStack1, numberToMove, supplyIndexStart-1, supplyIndexEnd-1);
+        moveSupply9001(cratesStack2, numberToMove, supplyIndexStart-1, supplyIndexEnd-1);
     }
 
-    std::cout << "Top boxes after rearrange: " << getTopBoxes() << std::endl;
+    std::cout << "Top boxes after rearrange SILVER: " << getTopBoxes(cratesStack1) << std::endl;
+    std::cout << "Top boxes after rearrange GOLD: " << getTopBoxes(cratesStack2) << std::endl;
+
+    delete[] cratesStack1;
+    delete[] cratesStack2;
+    delete[] cratesVector;
 
 	return 0;
 }
