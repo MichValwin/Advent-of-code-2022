@@ -51,6 +51,8 @@
         "unordered_set": "cpp",
         "xhash": "cpp",
         "list": "cpp",
-        "set": "cpp"
+        "set": "cpp",
+        "stack": "cpp",
+        "deque": "cpp"
     }
 }
