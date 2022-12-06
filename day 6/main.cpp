@@ -7,7 +7,10 @@
 #include <unordered_set>
 
 const char* INPUT_FILE = "bigboy.txt";
-const static uint8_t ARRAY_CHECK_MAX = 128;
+//BIGBOY
+//silver: 85760445
+//gold:   91845017
+const static uint8_t ARRAY_CHECK_MAX = 'z'-'a'+1;
 
 size_t getIndexCharRepeated(std::string line, uint32_t numCheckForChars) {
     size_t indexCheck = 0;
@@ -35,7 +38,7 @@ std::string getCharsOnCount(uint8_t arrCharCounter[]) {
     for(int i = 0; i < ARRAY_CHECK_MAX; i++) {
         int numChars = arrCharCounter[i];
         for(int j = 0; j < numChars; j++) {
-            charsIn += (char)i;
+            charsIn += (char)(i+'a');
         }
     }
     return charsIn;
@@ -48,25 +51,30 @@ bool checkRepeatingCharsCount(uint8_t arrCharCounter[]) {
     return false;
 }
 
-size_t getIndexCharRepeatedArray(std::string line, uint32_t numCheckForChars) {
+size_t getIndexCharRepeatedArray(std::string &line, uint32_t numCheckForChars) {
     size_t indexCheck = 0;
     uint8_t arrCheck[ARRAY_CHECK_MAX] = {0};
 
     // Insert first
     for(; indexCheck < numCheckForChars; indexCheck++) {
-        arrCheck[(uint8_t)line[indexCheck]] += 1;
+        uint8_t charToInsert = (uint8_t)line[indexCheck] - 'a';
+        arrCheck[charToInsert] += 1;
     }
     if(!checkRepeatingCharsCount(arrCheck))return indexCheck;
+    //std::cout << "Chars not repeating: " << getCharsOnCount(arrCheck) << std::endl;
 
     while(indexCheck < line.size()-numCheckForChars) {
-        uint8_t charLeaving = (uint8_t)line[indexCheck-numCheckForChars];
-        uint8_t charEntering = (uint8_t)line[indexCheck];
+        uint8_t charLeaving = (uint8_t)(line[indexCheck-numCheckForChars] - 'a');
+        uint8_t charEntering = (uint8_t)(line[indexCheck] - 'a');
         arrCheck[charEntering] += 1;
         arrCheck[charLeaving] -= 1;
 
         if(!checkRepeatingCharsCount(arrCheck)) {
+            //std::cout << "Chars not repeating: " << getCharsOnCount(arrCheck) << std::endl;
             return indexCheck;
         }
+        //std::cout << "Chars not repeating: " << getCharsOnCount(arrCheck) << std::endl;
+
 
         indexCheck++;
     }
@@ -81,6 +89,8 @@ int main() {
 		std::cout << "Can't open " << INPUT_FILE << std::endl;
 		exit(0);
 	}
+
+    std::cout << "ARRAY MAX: " << (uint32_t)ARRAY_CHECK_MAX << std::endl;
     
     std::string line;
     while(std::getline(inputFile, line)) {
