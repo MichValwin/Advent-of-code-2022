@@ -6,10 +6,19 @@
 #include <cmath>
 #include <unordered_set>
 
-const char* INPUT_FILE = "input.txt";
+//#define BIGBOY
 
-const static uint64_t TOTAL_SIZE_DISK = 70000000;
-const static uint64_t SPACE_NEEDED = 30000000;
+#ifdef BIGBOY
+    const char* INPUT_FILE = "bigboy_patched.txt";
+    const static uint64_t TOTAL_SIZE_DISK = 3000000000;
+    const static uint64_t SPACE_NEEDED = 700000000;
+#else
+    const char* INPUT_FILE = "input.txt";
+    const static uint64_t TOTAL_SIZE_DISK = 70000000;
+    const static uint64_t SPACE_NEEDED = 30000000;
+#endif
+
+
 
 struct SplitString{
     char delimiter;
@@ -47,6 +56,15 @@ struct TreeNode{
     std::vector<TreeNode*> directories;
 };
 
+void calculateDirSize(TreeNode* node) {
+    node->totalFileSize = node->localFileSize;
+    if(node->directories.size() != 0){
+        for(TreeNode* n: node->directories){
+            node->totalFileSize += n->totalFileSize;
+        }
+    }
+}
+
 int main() {
 	std::fstream inputFile(INPUT_FILE);
 
@@ -65,39 +83,24 @@ int main() {
 
     std::string line;
     while(std::getline(inputFile, line)) {
-        std::cout << line << std::endl;
-
         //Is command
         if(line[0] == '$') {
             if(line[2] == 'c') {
-                std::cout << "Command is cd ";
-
                 // cd command
                 std::string dirname = line.substr(5, std::string::npos);
                 if(dirname.compare("..") == 0) {
-                    std::cout << "to back directory" << std::endl;
-
                     // Before going back, calculate size
-                    if(currentNode->directories.size() == 0){
-                       currentNode->totalFileSize = currentNode->localFileSize;
-                    }else{
-                        currentNode->totalFileSize = currentNode->localFileSize;
-                        for(TreeNode* n: currentNode->directories){
-                            currentNode->totalFileSize += n->totalFileSize;
-                        }
-                    }
+                    calculateDirSize(currentNode);
                 
                     dirsWithSizeLess.push_back(std::pair<std::string, uint64_t>(currentNode->dirname, currentNode->totalFileSize));
 
                     // Go back
                     if(currentNode->parentNode != nullptr)currentNode = currentNode->parentNode;
                 }else{
-                    std::cout << "to new one, dirs inside local: " << currentNode->directories.size() << ", dir exist?: ";
                     // Go into
                     for(TreeNode* n: currentNode->directories) {
                         if(n->dirname.compare(dirname) == 0){
                             currentNode = n;
-                            std::cout << dirname << std::endl;
                         }
                     }
                 }
@@ -106,7 +109,6 @@ int main() {
             SplitString resSplit = splitString(line, ' ');
             
             if(resSplit.strings[0].compare("dir") == 0) {
-                std::cout << "Specifies directory: " << resSplit.strings[1] << std::endl;
                 // Dir
                 std::string dirname = resSplit.strings[1];
                 TreeNode* dir = new TreeNode();
@@ -116,7 +118,6 @@ int main() {
                 dir->totalFileSize = 0;
                 currentNode->directories.push_back(dir);
             }else{
-                std::cout << "Specifies file: " << resSplit.strings[1] << ", with size: " << resSplit.strings[0] << std::endl;
                 // File
                 uint64_t sizeFile = std::atoi(resSplit.strings[0].c_str());
                 std::string filename = resSplit.strings[1];
@@ -128,22 +129,12 @@ int main() {
 
     while(currentNode->parentNode != nullptr) {
         // Before going back, calculate size
-        if(currentNode->directories.size() == 0){
-            currentNode->totalFileSize = currentNode->localFileSize;
-        }else{
-            currentNode->totalFileSize = currentNode->localFileSize;
-            for(TreeNode* n: currentNode->directories){
-                currentNode->totalFileSize += n->totalFileSize;
-            }
-        }
+        calculateDirSize(currentNode);
                 
         dirsWithSizeLess.push_back(std::pair<std::string, uint64_t>(currentNode->dirname, currentNode->totalFileSize));
         currentNode = currentNode->parentNode;
     }
-    currentNode->totalFileSize = currentNode->localFileSize;
-    for(TreeNode* n: currentNode->directories){
-        currentNode->totalFileSize += n->totalFileSize;
-    }
+    calculateDirSize(currentNode);   
 
     uint64_t usedSpace = currentNode->totalFileSize;
     uint64_t freeSpace = TOTAL_SIZE_DISK - usedSpace;
@@ -159,11 +150,10 @@ int main() {
     // print dirs size less than 100000
     uint64_t silverSize = 0;
     std::string dirnameGold;
-    uint64_t sizeGold = 30000000;
+    uint64_t sizeGold = SPACE_NEEDED;
 
     for(auto dir: dirsWithSizeLess) {
         if(dir.second <= 100000){
-            //std::cout << "Directory: " << dir.first << " size: " << dir.second << std::endl;
             silverSize += dir.second;
         }
         if(dir.second < sizeGold && dir.second >= spaceNeeded) {
