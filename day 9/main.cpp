@@ -3,9 +3,17 @@
 #include <string>
 #include <cmath>
 #include <unordered_set>
+#include <chrono>
+#include <conio.h>
 
+// Helpers
+uint64_t benchmark;
+inline uint64_t getTimeNanoSinceEpoch() {
+	auto timePointNow = std::chrono::high_resolution_clock::now();
+	return std::chrono::duration_cast<std::chrono::nanoseconds>(timePointNow.time_since_epoch()).count();
+}
 
-#define BIGBOY
+//#define BIGBOY
 
 #ifdef BIGBOY
 	/*
@@ -32,42 +40,6 @@ void doPhysics(const Position &heads, Position &tails) {
 	int32_t totalDistanceX = std::abs(heads.x - tails.x);
 	int32_t totalDistanceY = std::abs(heads.y - tails.y);
 	
-	/*
-	int32_t totalDistance = totalDistanceX + totalDistanceY;
-	if(totalDistanceX > 1 || totalDistanceY > 1){
-		if(totalDistance > 2) {
-			//Move diagonally
-			if(heads.x > tails.x){
-				tails.x++;
-			}else{
-				tails.x--;
-			}
-
-			if(heads.y > tails.y){
-				tails.y++;
-			}else{
-				tails.y--;
-			}
-		}else{
-			//Move straight
-			if(totalDistanceX > totalDistanceY) {
-				if(heads.x > tails.x){
-					tails.x++;
-				}else{
-					tails.x--;
-				}
-			}else{
-				if(heads.y > tails.y){
-					tails.y++;
-				}else{
-					tails.y--;
-				}
-			}
-		}
-	}
-	*/
-
-	
 	if(totalDistanceX > 1 || totalDistanceY > 1) {
 		if(heads.x > tails.x) {
 			tails.x++;
@@ -81,7 +53,6 @@ void doPhysics(const Position &heads, Position &tails) {
 			tails.y--;
 		}
 	}
-	
 }
 
 void moveDirection(Position &pos, char direction) {
@@ -101,8 +72,41 @@ void moveDirection(Position &pos, char direction) {
 	}
 }
 
+void printAround(Position rope[]) {
+	static const uint16_t width = 64;
+	static const uint16_t height = 64;
+
+	char printArray[width*height] = {'.'};
+	for(int i = 0; i < width*height; i++) {
+		printArray[i] = '.';
+	}
+
+	Position head;
+	head.x = rope[0].x % width;
+	head.y = rope[0].y % height;
+
+	printArray[head.y*width + head.x] = 'H';
+	for(uint8_t i = 1; i < 10; i++) {
+		Position pos;
+		pos.x = rope[i].x % width;
+		pos.y = rope[i].y % height;
+
+		printArray[pos.y*width + pos.x] = '0'+i-1;
+	}
+
+	for(int i = 0; i < height; i++) {
+		for(int j = 0; j < width; j++) {
+			std::cout << printArray[i*width+j];
+		}
+		std::cout << std::endl;
+	}
+
+}
+
 
 int main() {
+	benchmark = getTimeNanoSinceEpoch();
+
 	std::fstream inputFile = std::fstream(INPUT_FILE);
 
 	if(!inputFile.is_open()) {
@@ -137,11 +141,15 @@ int main() {
 			uniquePositionsSilver.insert(toU64ForIndexing(longerRope[1]));
 			// Gold
 			uniquePositionsGold.insert(toU64ForIndexing(longerRope[9]));
+			system("cls");
+			printAround(longerRope);
 		}
 	}
+	benchmark = getTimeNanoSinceEpoch() - benchmark;
 
 	std::cout << "Unique positions Silver: " << uniquePositionsSilver.size() << std::endl;
 	std::cout << "Unique positions Gold: " << uniquePositionsGold.size() << std::endl;
+	std::cout << "Time elapsed: " << benchmark / 1e9 << " Seconds" << std::endl;
 
 	return 0;
 }
