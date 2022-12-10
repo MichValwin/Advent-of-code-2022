@@ -11,4 +11,10 @@ CTestTestfile.cmake
 _deps
 **.exe
 /.vscode
-bigboy.txt
+
+# Ignore everything
+*
+
+!input.txt
+!main.cpp
+!*/
