@@ -7,7 +7,7 @@
 #include <unordered_set>
 
 
-static const char* INPUT_FILE = "odu_.txt";
+static const char* INPUT_FILE = "input.txt";
 
 
 void printTreeMatrix(uint8_t* treeMatrix, int32_t width, int32_t height) {
