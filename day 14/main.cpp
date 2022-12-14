@@ -215,11 +215,11 @@ int main() {
         if(sand.x != -1){
             //std::cout << "Creating sand at: " << sand.x << "," << sand.y << "\n";
             map[sand.y*WIDTH+sand.x] = 'o';
-            numSandUntil++;
         }else{
             std::cout << "SAND DID FALL FOR EVER" << "\n";
             lastFall = true;
         }
+        numSandUntil++;
     }  
     //printMap(map, boundsValues.first, boundsValues.second, WIDTH); 
 
