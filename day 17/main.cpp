@@ -112,7 +112,6 @@ bool isCollidingAfterDirection(char* map, int32_t width, int32_t height, std::ve
 
 void putFigureInMap(char* map, int32_t width, std::vector<Position> &figure) {
     for(Position &p: figure) {
-        if(map[p.y*width + p.x] == '#')std::cout << "ERROR " << "\n";
         map[p.y*width + p.x] = '#';
     }
 }
@@ -139,7 +138,7 @@ void printMap(const char* map, int32_t width, int32_t height, const std::vector<
 }
 
 void printMap(const char* map, int32_t width, int32_t height) {
-     for(int32_t y = height; y >= 0; y--) {
+     for(int32_t y = height-1; y >= 0; y--) {
         for(int32_t x = 0; x < width; x++) {
             std::cout << map[y*width+x];
         }
@@ -168,13 +167,7 @@ void printFigure(const std::vector<Position> figure) {
     delete[] figureMap;
 }
 
-uint64_t getMaxHeight(uint64_t rocksToSpawn, const std::vector<Position*> &wind) {
-    int32_t width = 7;
-    int32_t height = 60;
-
-    char* map = new char[width*height];
-    for(int i = 0; i < width*height; i++)map[i] = '.';
-
+uint64_t getMaxHeight(char* map, int32_t width, int32_t height, uint64_t rocksToSpawn, const std::vector<const Position*> &wind) {
     uint64_t rocksSpawned = 0;
     int32_t step = 0;
     int32_t figureIndex = 0;
@@ -185,13 +178,11 @@ uint64_t getMaxHeight(uint64_t rocksToSpawn, const std::vector<Position*> &wind)
 
     while(rocksSpawned < rocksToSpawn) {
         if(step == 0){
-            // check height
-
             // create figure
             currentFigure = transformToValidMapCoordinates(map, width, height, FIGURES[figureIndex]);
 
             figureIndex = (figureIndex+1) % 5;
-            std::cout << "Next figure " << figureIndex << "\n";
+            //std::cout << "Next figure " << figureIndex << "\n";
         }
 
         bool collidesWithGround = false;
@@ -232,9 +223,108 @@ uint64_t getMaxHeight(uint64_t rocksToSpawn, const std::vector<Position*> &wind)
             step++;
         }
         //std::cout << "\n";
-        //printMap(tetrisMap, WIDTH, 40, currentFigure);
+        //printMap(map, width, 40, currentFigure);
         //std::cout << "\n";
     }
+
+    return getTallestPosition(map, width, height);
+}
+
+std::vector<int32_t> repeatUpdates(char* map, int32_t width, int32_t height, uint64_t loopsthroughData, const std::vector<const Position*> &wind) {
+    size_t loopsDone = 0;
+    int32_t step = 0;
+    int32_t figureIndex = 0;
+    int32_t windIndex = 0;
+    std::vector<Position> currentFigure;
+
+    uint64_t rocksFall = 0;
+    Position direction = {0, 0};
+
+    std::vector<int32_t> tallestPointEach;
+
+    while(loopsDone < loopsthroughData) {
+    //while(rocksFall < 2022){
+        if(step == 0){
+            // create figure
+            currentFigure = transformToValidMapCoordinates(map, width, height, FIGURES[figureIndex]);
+
+            figureIndex = (figureIndex+1) % 5;
+            //std::cout << "Next figure " << figureIndex << "\n";
+        }
+
+        bool collidesWithGround = false;
+        bool collidesLateral = false;
+        if(step % 2 == 1){
+            //std::cout << "Rock falls 1 unit";
+            direction = *down;
+            collidesWithGround = isCollidingAfterDirection(map, width, height, currentFigure, direction);
+        }else if(step % 2 == 0){
+            if(wind.size() > 0) {
+                //std::cout << "Jet of gas pushes rock";
+                direction = *wind[windIndex];
+               
+                if(windIndex % wind.size() == 0){
+                    //std::cout << windIndex << "\n";
+                    loopsDone++;
+                }
+                windIndex = (windIndex+1) % wind.size();
+                //if(direction.x  == -1) std::cout << " left";
+                //if(direction.x  == 1) std::cout << " right";
+
+                collidesLateral = isCollidingAfterDirection(map, width, height, currentFigure, direction);
+            }
+        }
+
+        // Update figure if it doesn't collide
+        if(!collidesWithGround && !collidesLateral) {
+            for(Position &p: currentFigure) {
+                p.x += direction.x;
+                p.y += direction.y;
+            }
+        }
+
+        //if(collidesLateral)std::cout << ", but nothing happens";
+
+        if(collidesWithGround) {
+            //std::cout << ", causing it to come to rest";
+            // Put figure in map
+            putFigureInMap(map, width, currentFigure);
+            step = 0;
+            rocksFall++;
+            tallestPointEach.push_back(getTallestPosition(map, width, height));
+        }else{
+            step++;
+        }
+        //std::cout << "\n";
+        //printMap(map, width, 40, currentFigure);
+        //std::cout << "\n";
+    }
+
+    return tallestPointEach;
+}
+
+int64_t repeatingPattern(const char* map, int64_t size) {
+    int64_t sizeRepeatedArea = size / 2.0;
+    
+    std::string toSearch = map;
+
+    bool repeats = false;
+    while(!repeats && sizeRepeatedArea > 10) {
+        repeats = false;
+
+        for(int64_t i = 0; i < size-sizeRepeatedArea; i++) {
+            std::string substrToSearchFor = toSearch.substr(i, sizeRepeatedArea);
+            if(toSearch.find(substrToSearchFor, i+1) != std::string::npos){
+                repeats = true;
+                std::cout << "From " << i << " to " << sizeRepeatedArea <<  "\n"; 
+                break;
+            }
+        }
+        std::cout << "size repeated area: " << sizeRepeatedArea << "\n";
+        sizeRepeatedArea--;
+    }
+    
+    return sizeRepeatedArea;
 }
 
 int main() {
@@ -246,15 +336,12 @@ int main() {
     }
 
     int32_t WIDTH = 7;
-    int32_t HEIGHT = 5000;
+    int32_t HEIGHT = 800000;
 
     char* tetrisMap = new char[WIDTH*HEIGHT];
     for(int64_t i = 0; i < WIDTH*HEIGHT; i++)tetrisMap[i] = '.';
 
     std::vector<const Position*> wind;
-
-    int32_t figureIndex = 0;
-    std::vector<Position> currentFigure;
 
     // Parse
     std::string line;
@@ -271,62 +358,59 @@ int main() {
             }
         }
     }
-    
-    
 
-    int32_t step = 0;
-    Position direction = {0, 0};
-    int32_t rocksStopped = 0;
-    int32_t windIndex = 0;
-
-    while(rocksStopped < 2022) {
-        if(step == 0){
-            // create figure
-            currentFigure = transformToValidMapCoordinates(tetrisMap, WIDTH, HEIGHT, FIGURES[figureIndex]);
-
-            figureIndex = (figureIndex+1) % 5;
-        }
-
-        bool collidesWithGround = false;
-        bool collidesLateral = false;
-        if(step % 2 == 1){
-            direction = *down;
-            collidesWithGround = isCollidingAfterDirection(tetrisMap, WIDTH, HEIGHT, currentFigure, direction);
-        }else if(step % 2 == 0){
-            if(wind.size() > 0) {
-                direction = *wind[windIndex];
-                windIndex = (windIndex+1) % wind.size();
-
-                collidesLateral = isCollidingAfterDirection(tetrisMap, WIDTH, HEIGHT, currentFigure, direction);
-            }
-        }
-
-        // Update figure if it doesn't collide
-        if(!collidesWithGround && !collidesLateral) {
-            for(Position &p: currentFigure) {
-                p.x += direction.x;
-                p.y += direction.y;
-            }
-        }
-
-        if(collidesWithGround) {
-            // Put figure in map
-            putFigureInMap(tetrisMap, WIDTH, currentFigure);
-            step = 0;
-            rocksStopped++;
-        }else{
-            step++;
-        }
+    /*
+    //int32_t silver = getMaxHeight(tetrisMap, WIDTH, HEIGHT, 2022, wind);
+    std::vector<int32_t> tallestPointsEachblock = repeatUpdates(tetrisMap, WIDTH, HEIGHT, 1, wind);
+    //printMap(tetrisMap, WIDTH, HEIGHT);
+    std::cout << "Done \n";
+    std::vector<int32_t> diffs;
+    for(size_t i = 0; i < tallestPointsEachblock.size()-1; i++){
+        diffs.push_back(tallestPointsEachblock[i+1] - tallestPointsEachblock[i]);
     }
+    for(int32_t diff: diffs){
+        std::cout << diff;
+    }
+    std::cout << "\n";
+    */
 
-    int32_t silver = getTallestPosition(tetrisMap, WIDTH, HEIGHT);
+    std::string sumcadena = "33201330203030003101330013300121301030013240130020222213320133401303213320003401230013030132100322012220133001303012130132";
+    int32_t total = 0;
+    for(size_t i = 0; i < sumcadena.size(); i++){
+        total += (sumcadena[i] - '0');
+    }
+    std::cout << "total : " << total << "\n";
 
+    std::cout << "Mod: " << 1514285714288 / 53  << "\n";
 
+    int64_t rockInit = 1722;
+    int64_t heightInit = 2720;
+
+    int64_t repetHeight = 2709;
+    int64_t repetRocks = 1725;
+    int64_t height = heightInit;
+
+    int64_t totalRocks = rockInit;
+
+    for(; totalRocks < 1000000000000; totalRocks+= repetRocks) {
+        height += repetHeight;
+    }  
+    std::cout << "Final height: " << height << "\n";
+    std::cout << "Rocks: " << totalRocks << "\n";
+    // check repetition of blocks
+    /*
+    int64_t sizeRepeatedAreaFirst = repeatingPattern(tetrisMap, WIDTH*HEIGHT);
+    std::cout << "sizeRepeatedArea: " << sizeRepeatedAreaFirst << "\n";
+    */
+
+    std::cout << int64_t(height - 182) << "\n";
+  
 
     std::cout << "\n\n";
-    std::cout << "Silver: " << silver+1 <<   "\n";
+    //std::cout << "Silver: " << silver+1 <<   "\n";
     std::cout << "Gold: " << "\n";
 
+    delete[] tetrisMap;
 
     return 0;
 }
